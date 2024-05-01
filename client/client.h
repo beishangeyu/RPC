@@ -1,6 +1,6 @@
 // 定义客户端相关操作
-#ifndef CLIENT
-#define CLIENT
+#ifndef CLIENT_H
+#define CLIENT_H
 
 #include <iostream>
 #include <sys/socket.h>
@@ -9,7 +9,9 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <fcntl.h>
+#include <cstdlib>
 #include <map>
+#include <string>
 #include "../json/json.hpp"
 using namespace std;
 using json = nlohmann::json;
@@ -18,14 +20,12 @@ using json = nlohmann::json;
 class CLIENT
 {
 public:
+    void client_init(); // 初始化连接
+    void client_pull(); // 从 rpc 获取服务器地址
+    void client_call(); // 向服务端申请调用
 private:
-    // 套接字部分
-    int clt2rpc_fd; // 用于和rpc注册中心通信
-    int clt2ser_fd; // 用于和服务端通信
-    // 服务端的端口和编号
-    sockaddr_in ser_addr;
-    // json 部分
-    json clt_j;
+    int client_fd; // 客户端套接字
+    json client_msg;
 };
 
 #endif

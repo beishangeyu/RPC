@@ -13,23 +13,21 @@
 #include "../json/json.hpp"
 using namespace std;
 using json = nlohmann::json;
+typedef void (*func_ptr)();
 
 // 服务器类
 class SERVE
 {
 public:
-    // 初始化
-    void serve_init();
-    // 处理客户端
-    void private :
-        // 端口号和地址
-        sockaddr_in address;
-    // 监听套接字
-    int serve_fd;
-    // 已注册的函数列表, 每个服务端各自拥有一个
-    map<string, int> func_list;
-    // json 部分
-    json ser_j;
+    void server_init();   // 初始化
+    void server_listen(); // 开启监听
+    void server_oprate(); // 向注册中心注册或者删除服务
+private:
+    sockaddr_in address;       // 端口号和地址
+    int serve_fd;              // 监听套接字
+    map<string, int> func2idx; // 服务器端已有服务和对应编号
+    vector<func_ptr> func;     // 存储已有函数的函数指针
+    json server_msg;
 };
 
 #endif
