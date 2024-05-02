@@ -12,25 +12,29 @@
 #include <pthread.h>
 #include <map>
 #include "../json/json.hpp"
+#include "../json/json.h"
 using namespace std;
 using json = nlohmann::json;
-#define SOMAXCONN 15
-#define SERVER "Server"
-#define CLIENT "Client"
+#define MAXTHREAD 10
 
 class RPC
 {
 public:
     void rpc_init(string ip, short port); // 初始化
-    void rpc_dealclient();                // 处理 client 连接, 向 client 发送服务器地址
-    void rpc_dealserver();                // 处理 server 连接, 注册或者删除服务
-    void rpc_deal();
+    void rpc_start();                     // 开启服务
 
 private:
     int rpc_fd;                  // rpc 套接字
+    map<string, int> func2port;  // 服务表, <服务名称, port>
     map<string, string> func2ip; // 服务表, <服务名称, ip地址>, 记录每个服务在哪个服务端那里 (假设每个服务端拥有的服务都不相同)
     pthread_mutex_t lock;        // 互斥锁保护服务表
     json rpc_msg;
+
+private:
+    static void *worker(void *arg); // 线程的工作函数
+    json rpc_dealclient(json);      // 处理 client 连接, 向 client 发送服务器地址
+    json rpc_dealserver(json);      // 处理 server 连接, 注册或者删除服务
+    void rpc_deal();                // 线程工作的实际逻辑
 };
 
 #endif
