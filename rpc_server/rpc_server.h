@@ -22,13 +22,13 @@ class RPC
 public:
     void rpc_init(string ip, short port); // 初始化
     void rpc_start();                     // 开启服务
+    ~RPC();
 
 private:
     int rpc_fd;                  // rpc 套接字
     map<string, int> func2port;  // 服务表, <服务名称, port>
     map<string, string> func2ip; // 服务表, <服务名称, ip地址>, 记录每个服务在哪个服务端那里 (假设每个服务端拥有的服务都不相同)
     pthread_mutex_t lock;        // 互斥锁保护服务表
-    json rpc_msg;
 
 private:
     static void *worker(void *arg); // 线程的工作函数

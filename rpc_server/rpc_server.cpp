@@ -2,8 +2,6 @@
 
 void RPC::rpc_init(string ip, short port)
 {
-    // 设定身份信息
-    rpc_msg[IDENTITY] = RPC_SERVER;
     // 监听套接字
     rpc_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (rpc_fd == -1)
@@ -115,7 +113,7 @@ void RPC::rpc_deal()
         resp = rpc_dealserver(recv_msg);
     }
     string msg = resp.dump();
-    if (send(conc, msg.c_str(), msg.length(), 0) == -1)
+    if (write(conc, msg.c_str(), msg.length()) == -1)
     {
         cerr << "Failed to send message" << endl;
         close(conc);
@@ -129,8 +127,9 @@ void RPC::rpc_start()
 {
     pthread_t thread[MAXTHREAD];
     listen(rpc_fd, SOMAXCONN);
-    for (int k = 0; k < 5; k++)
+    while (1)
     {
+        // 创建线程处理连接
         for (int i = 0; i < MAXTHREAD; i++)
         {
             if (pthread_create(&thread[i], NULL, worker, this) != 0)
@@ -145,4 +144,10 @@ void RPC::rpc_start()
             pthread_join(thread[i], NULL);
         }
     }
+}
+
+RPC::~RPC()
+{
+    close(rpc_fd);
+    pthread_mutex_destroy(&lock);
 }
