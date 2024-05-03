@@ -1,46 +1,41 @@
 #include "rpc_server.h"
 
-void RPC::rpc_init(string ip, short port)
+void Rpc_server::rpc_init(string ip, short port)
 {
     // 监听套接字
     rpc_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (rpc_fd == -1)
     {
-        cerr << "创建RPC注册中心套接字失败\n";
+        cerr << "创建套接字失败\n";
         return;
     }
+    // 允许地址重用
+    int reuse = 1;
+    if (setsockopt(rpc_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
+    {
+        cerr << "设置地址重用失败" << endl;
+        close(rpc_fd);
+        return;
+    }
+    // 绑定地址到套接字
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     inet_pton(AF_INET, ip.c_str(), &server_addr.sin_addr); // 将字符串转为网络字节序
     server_addr.sin_port = htons(port);
     if (bind(rpc_fd, (sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
-        cerr << "绑定RPC注册中心套接字失败\n";
+        cerr << "绑定套接字失败\n";
         close(rpc_fd);
         return;
     }
-    // 初始化锁
-    pthread_mutex_init(&lock, NULL);
-    listen(rpc_fd, SOMAXCONN);
-}
-
-// 线程的工作函数
-// 需要设置成静态函数, 才可以分配给线程使用
-void *RPC::worker(void *arg)
-{
-    // 用传参方式访问类成员函数
-    RPC *my_rpc = (RPC *)arg;
-    // 执行真正的线程工作逻辑
-    my_rpc->rpc_deal();
-    pthread_exit(NULL);
 }
 
 // 向 client 发送服务表
-json RPC::rpc_dealclient(json recv_msg)
+json Rpc_server::rpc_dealclient(json recv_msg)
 {
     json resp;
     resp[IDENTITY] = RPC_SERVER;
-    pthread_mutex_lock(&lock);
+    lock.lock();
     // 请求服务名称
     string func = recv_msg[FUNC];
     // 在map中查找
@@ -51,20 +46,21 @@ json RPC::rpc_dealclient(json recv_msg)
         resp[IP] = func2ip[func];
         resp[PORT] = to_string(func2port[func]);
     }
-    pthread_mutex_unlock(&lock);
+    lock.unlock();
     // 在连接中写入信息
     return resp;
 }
 
 // 读取服务器发来的数据, 构建自己的服务表
 // json信息中包含服务器的供服务调用的端口号和ip地址
-json RPC::rpc_dealserver(json recv_msg)
+json Rpc_server::rpc_dealserver(json recv_msg)
 {
     json resp;
     resp[IDENTITY] = RPC_SERVER;
-    pthread_mutex_lock(&lock);
+
     // 需要注册的服务的名称
     string func_name = recv_msg[FUNC];
+    lock.lock();
     // 注册的服务已存在, 告知客户端
     if (func2ip.count(func_name))
     {
@@ -79,75 +75,106 @@ json RPC::rpc_dealserver(json recv_msg)
         func2ip[func_name] = ip;
         func2port[func_name] = stoi(port);
     }
+    lock.unlock();
     return resp;
 }
 
-// 线程工作实际的逻辑
+// 线程的工作函数
 // 分配一个线程来处理连接, 因为每个连接会被分配一个单独的 fd, 以此实现并发处理请求
-void RPC::rpc_deal()
+void Rpc_server::rpc_deal()
 {
-    // 接受来自 client 的连接
-    sockaddr_in addr;
-    socklen_t addr_len = sizeof(addr);
-    int conc = accept(rpc_fd, (sockaddr *)&addr, &addr_len);
-    char buffer[1024];
-    // 从连接上读取数据
-    json recv_msg;
-    int byte = read(conc, buffer, sizeof(buffer) - 1);
-    if (byte == -1)
+    while (true)
     {
-        cerr << "Failed to receive message" << endl;
+        // 后续可以获取对方的ip, 输出错误信息的时候可以带上ip
+        int conc = accept(rpc_fd, nullptr, nullptr);
+        // 处理获取连接失败的情况
+        if (conc == -1)
+        {
+            cout << "Accept失败" << endl;
+            continue;
+        }
+        set_timeout(conc, 10); // 设置读写超时时间为10秒
+        char buffer[1024];
+        // 从连接上读取数据
+        json recv_msg;
+        int byte = recv(conc, buffer, sizeof(buffer) - 1, 0);
+        // 处理读失败
+        if (byte == -1)
+        {
+            if (errno == EWOULDBLOCK || errno == EAGAIN)
+            {
+                cout << "recv超时" << endl;
+            }
+            else
+            {
+                cout << "recv失败" << endl;
+            }
+            close(conc);
+            continue;
+        }
+        buffer[byte] = '\0';
+        recv_msg = recv_msg.parse(buffer);
+        // 生成响应报文并写入连接
+        json resp;
+        if (recv_msg[IDENTITY] == CLIENT)
+        {
+            resp = rpc_dealclient(recv_msg);
+        }
+        else
+        {
+            resp = rpc_dealserver(recv_msg);
+        }
+        // 把 json 转化为字节流, 往连接上写数据
+        string msg = resp.dump();
+        // 处理写失败
+        if (write(conc, msg.c_str(), msg.length()) == -1)
+        {
+            if (errno == EWOULDBLOCK || errno == EAGAIN)
+            {
+                cout << "write超时" << endl;
+            }
+            else
+            {
+                cout << "write失败" << endl;
+            }
+            close(conc);
+            continue;
+        }
         close(conc);
-        return;
     }
-    buffer[byte] = '\0';
-    recv_msg = recv_msg.parse(buffer);
-    // 生成响应报文并写入连接
-    json resp;
-    if (recv_msg[IDENTITY] == CLIENT)
-    {
-        resp = rpc_dealclient(recv_msg);
-    }
-    else
-    {
-        resp = rpc_dealserver(recv_msg);
-    }
-    string msg = resp.dump();
-    if (write(conc, msg.c_str(), msg.length()) == -1)
-    {
-        cerr << "Failed to send message" << endl;
-        close(conc);
-        return;
-    }
-    close(conc);
+
     return;
 }
 
-void RPC::rpc_start()
+void Rpc_server::set_timeout(int fd, int sec)
 {
-    pthread_t thread[MAXTHREAD];
-    listen(rpc_fd, SOMAXCONN);
-    while (1)
-    {
-        // 创建线程处理连接
-        for (int i = 0; i < MAXTHREAD; i++)
-        {
-            if (pthread_create(&thread[i], NULL, worker, this) != 0)
-            {
-                cerr << "Faild to creat thread\n";
-                return;
-            }
-        }
+    timeval tv = {sec, 0};
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)); // 设置接受超时
+    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof(tv)); // 设置发送超时
+}
 
-        for (int i = 0; i < MAXTHREAD; i++)
-        {
-            pthread_join(thread[i], NULL);
-        }
+void Rpc_server::setnonblocking(int fd)
+{
+}
+
+void Rpc_server::rpc_start()
+{
+    thread threads[MAXTHREAD];
+    // 开始监听
+    listen(rpc_fd, SOMAXCONN);
+    for (int i = 0; i < MAXTHREAD; i++)
+    {
+        // 让线程去处理连接
+        // 通过传入this指针, 让类的成员函数可以创建线程, 线程的工作函数也是类的成员函数
+        threads[i] = thread(&Rpc_server::rpc_deal, this);
+        threads[i].detach(); // 让线程独立运行
     }
 }
 
-RPC::~RPC()
+Rpc_server::~Rpc_server()
 {
+    // 关闭监听套接字
     close(rpc_fd);
-    pthread_mutex_destroy(&lock);
+    // 销毁锁
+    lock.~mutex();
 }
