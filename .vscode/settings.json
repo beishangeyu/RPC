@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "iostream": "cpp",
-        "ostream": "cpp",
-        "map": "cpp",
-        "condition_variable": "cpp",
-        "functional": "cpp"
-    }
-}
