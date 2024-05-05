@@ -1,6 +1,5 @@
 #include "server.h"
 
-// 参数: ip地址, 端口号, 要开启的服务数量, 服务列表
 void Server::server_init(string ip, short port, int num, int func[])
 {
     // 设置服务器基本参数
@@ -33,6 +32,13 @@ void Server::server_init(string ip, short port, int num, int func[])
         close(server_fd);
         return;
     }
+    // 向本地服务表注册
+    for (int i = 0; i < num; i++)
+    {
+        add_func_map(func[i]);
+    }
+    // 向注册中心注册
+    registe();
 }
 
 void Server::server_start()
@@ -44,49 +50,55 @@ void Server::server_start()
 // 向注册中心注册服务
 void Server::registe()
 {
+    // 本地拥有的服务
+    string func;
+    for (auto &it : func2idx)
+    {
+        func += it.first + " ";
+    }
 }
 
-// 向本地服务表中添加
+// 向本地服务表注册函数
 void Server::add_func_map(int func_idx)
 {
     // 服务器支持的服务一共有12种
     switch (func_idx)
     {
     case 0:
-        /* code */
+        func2idx["add"] = 0;
         break;
     case 1:
-        /* code */
+        func2idx["subtract"] = 1;
         break;
     case 2:
-        /* code */
+        func2idx["multiply"] = 2;
         break;
     case 3:
-        /* code */
+        func2idx["divide"] = 3;
         break;
     case 4:
-        /* code */
+        func2idx["concat"] = 4;
         break;
     case 5:
-        /* code */
+        func2idx["compare"] = 5;
         break;
     case 6:
-        /* code */
+        func2idx["func1"] = 6;
         break;
     case 7:
-        /* code */
+        func2idx["func2"] = 7;
         break;
     case 8:
-        /* code */
+        func2idx["func3"] = 8;
         break;
     case 9:
-        /* code */
+        func2idx["func4"] = 9;
         break;
     case 10:
-        /* code */
+        func2idx["func5"] = 10;
         break;
     case 11:
-        /* code */
+        func2idx["func6"] = 11;
         break;
     default:
         break;
