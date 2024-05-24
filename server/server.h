@@ -8,26 +8,30 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <fcntl.h>
 #include <map>
+#include <mutex>
+#include <thread>
 #include "../json/json.hpp"
+#include "../json/json.h"
 using namespace std;
 using json = nlohmann::json;
 #define MAXFUNCNUM 12;
+#define MAXTHREAD 10
 
 // 服务器类
 class Server
 {
 public:
-    void server_init(string, short, int, int[]); // 初始化
+    void server_init(string, short, int, int[], int = 0, string, short); // 初始化
     void server_start();                         // 服务器开始运行
 private:
-    void registe();         // 编写注册的 json
     void add_func_map(int); // 向本地服务表中添加
+    void deal_client();
 private:
     string server_ip;          // 服务端ip
     short server_port;         // 服务端端口号
-    int server_fd;             // 监听套接字
+    int server_fd;             // 接受客户端连接套接字
+    int sev2rpc_fd;          //连接注册中心套接字
     map<string, int> func2idx; // 本地服务表, 服务器端已有服务和对应编号
     int num_func;              // 服务端支持的服务的个数
 private:

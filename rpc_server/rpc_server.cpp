@@ -22,7 +22,7 @@ void Rpc_server::rpc_init(string ip, short port)
     server_addr.sin_family = AF_INET;
     inet_pton(AF_INET, ip.c_str(), &server_addr.sin_addr); // 将字符串转为网络字节序
     server_addr.sin_port = htons(port);
-    if (bind(rpc_fd, (sockaddr *)&server_addr, sizeof(server_addr)) == -1)
+    if (bind(rpc_fd, (sockaddr*)&server_addr, sizeof(server_addr)) == -1)
     {
         cerr << "绑定套接字失败\n";
         close(rpc_fd);
@@ -40,7 +40,7 @@ json Rpc_server::rpc_dealclient(json recv_msg)
     string func = recv_msg[FUNC];
     // 在map中查找
     int ret = func2ip.count(func);
-    resp[RET] = ret ? SUC : Fa;
+    resp[RET] = ret ? SUCCESS : FAILD;
     if (ret)
     {
         resp[IP] = func2ip[func];
@@ -64,7 +64,8 @@ json Rpc_server::rpc_dealserver(json recv_msg)
     // 注册的服务已存在, 告知客户端
     if (func2ip.count(func_name))
     {
-        resp[RET] = RER;
+        // 注册结果: 重复注册
+        resp[RET] = FAILD;
     }
     // 注册的服务不存在, 允许注册
     else
@@ -74,6 +75,8 @@ json Rpc_server::rpc_dealserver(json recv_msg)
         // 在服务表中注册
         func2ip[func_name] = ip;
         func2port[func_name] = stoi(port);
+        // 注册结果:成功
+        resp[RET] = SUCCESS;
     }
     lock.unlock();
     return resp;
@@ -148,13 +151,9 @@ void Rpc_server::rpc_deal()
 
 void Rpc_server::set_timeout(int fd, int sec)
 {
-    timeval tv = {sec, 0};
-    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)); // 设置接受超时
-    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof(tv)); // 设置发送超时
-}
-
-void Rpc_server::setnonblocking(int fd)
-{
+    timeval tv = { sec, 0 };
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)); // 设置接受超时
+    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv)); // 设置发送超时
 }
 
 void Rpc_server::rpc_start()

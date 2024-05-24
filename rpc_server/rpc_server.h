@@ -34,7 +34,6 @@ private:
     json rpc_dealserver(json);         // 处理 server 连接, 注册或者删除服务
     void rpc_deal();                   // 线程工作的实际逻辑
     void set_timeout(int fd, int sec); // 为连接设置超时时间
-    void setnonblocking(int fd);
     mutex lock;
 };
 
