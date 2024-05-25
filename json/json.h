@@ -2,29 +2,32 @@
 #ifndef JSONH
 #define JSONH
 
-// 服务名称, key
-#define FUNC "Function"     
+// 请求或要注册的服务名称, key
+#define FUNC "Function"
 
 // 自己的身份, key
-#define IDENTITY "Identity" 
+#define IDENTITY "Identity"
 // value
 #define SERVER "server"
 #define CLIENT "client"
 #define RPC_SERVER "RPC"
 
 // 注册或者请求结果, key
-#define RET "Ret"      
-// value     
-#define SUCCESS "Successfully" //注册 或 申请服务成功
-#define FAILD "Faild" //注册 或 申请服务失败
+#define RET "Ret"
+// value
+#define SUCCESS "Successfully" // 注册 或 申请服务成功
+#define FAILD "Faild"          // 注册 或 申请服务失败
 
 // ip地址, key
-#define IP "Ip"             
+#define IP "Ip"
 
 // 端口号, key
-#define PORT "Port"       
+#define PORT "Port"
 
 // 服务的参数
 #define ARGS "Args"
+
+// 服务返回的结果
+#define RES "Result"
 
 #endif
