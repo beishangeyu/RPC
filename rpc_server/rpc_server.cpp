@@ -1,5 +1,8 @@
 #include "rpc_server.h"
 
+/// @brief 初始化注册中心
+/// @param ip 注册中心监听的ip地址
+/// @param port 注册中心监听的端口
 void Rpc_server::rpc_init(string ip, short port)
 {
     // 监听套接字
@@ -9,7 +12,7 @@ void Rpc_server::rpc_init(string ip, short port)
         cerr << "创建套接字失败\n";
         return;
     }
-    // 允许地址重用
+    // 允许端口复用
     int reuse = 1;
     if (setsockopt(rpc_fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1)
     {
@@ -22,7 +25,7 @@ void Rpc_server::rpc_init(string ip, short port)
     server_addr.sin_family = AF_INET;
     inet_pton(AF_INET, ip.c_str(), &server_addr.sin_addr); // 将字符串转为网络字节序
     server_addr.sin_port = htons(port);
-    if (bind(rpc_fd, (sockaddr*)&server_addr, sizeof(server_addr)) == -1)
+    if (bind(rpc_fd, (sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
         cerr << "绑定套接字失败\n";
         close(rpc_fd);
@@ -30,7 +33,9 @@ void Rpc_server::rpc_init(string ip, short port)
     }
 }
 
-// 向 client 发送服务表
+/// @brief 将 client 请求的服务所在服务器地址发给 client
+/// @param recv_msg client 发来的消息
+/// @return 查询结果和地址
 json Rpc_server::rpc_dealclient(json recv_msg)
 {
     json resp;
@@ -47,12 +52,12 @@ json Rpc_server::rpc_dealclient(json recv_msg)
         resp[PORT] = to_string(func2port[func]);
     }
     lock.unlock();
-    // 在连接中写入信息
     return resp;
 }
 
-// 读取服务器发来的数据, 构建自己的服务表
-// json信息中包含服务器的供服务调用的端口号和ip地址
+/// @brief 处理 sever 注册服务的请求
+/// @param recv_msg server 发来的信息
+/// @return 注册结果
 json Rpc_server::rpc_dealserver(json recv_msg)
 {
     json resp;
@@ -71,10 +76,10 @@ json Rpc_server::rpc_dealserver(json recv_msg)
     else
     {
         string ip = recv_msg[IP];
-        string port = recv_msg[PORT];
+        short port = recv_msg[PORT];
         // 在服务表中注册
         func2ip[func_name] = ip;
-        func2port[func_name] = stoi(port);
+        func2port[func_name] = port;
         // 注册结果:成功
         resp[RET] = SUCCESS;
     }
@@ -82,13 +87,11 @@ json Rpc_server::rpc_dealserver(json recv_msg)
     return resp;
 }
 
-// 线程的工作函数
-// 分配一个线程来处理连接, 因为每个连接会被分配一个单独的 fd, 以此实现并发处理请求
+/// @brief 处理 connect 请求, 线程的工作函数
 void Rpc_server::rpc_deal()
 {
-    while (true)
+    while (!is_stop)
     {
-        // 后续可以获取对方的ip, 输出错误信息的时候可以带上ip
         int conc = accept(rpc_fd, nullptr, nullptr);
         // 处理获取连接失败的情况
         if (conc == -1)
@@ -96,7 +99,8 @@ void Rpc_server::rpc_deal()
             cout << "Accept失败" << endl;
             continue;
         }
-        set_timeout(conc, 10); // 设置读写超时时间为10秒
+        set_timeout(conc, 20); // 设置读写超时时间为10秒
+        cout << conc << endl;
         char buffer[1024];
         // 从连接上读取数据
         json recv_msg;
@@ -117,6 +121,7 @@ void Rpc_server::rpc_deal()
         }
         buffer[byte] = '\0';
         recv_msg = recv_msg.parse(buffer);
+        cout << recv_msg;
         // 生成响应报文并写入连接
         json resp;
         if (recv_msg[IDENTITY] == CLIENT)
@@ -149,11 +154,14 @@ void Rpc_server::rpc_deal()
     return;
 }
 
+/// @brief 为连接设置超时时间
+/// @param fd 连接的文件描述符
+/// @param sec 超时时间(秒)
 void Rpc_server::set_timeout(int fd, int sec)
 {
-    timeval tv = { sec, 0 };
-    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)); // 设置接受超时
-    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof(tv)); // 设置发送超时
+    timeval tv = {sec, 0};
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)); // 设置接受超时
+    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&tv, sizeof(tv)); // 设置发送超时
 }
 
 void Rpc_server::rpc_start()
@@ -167,6 +175,16 @@ void Rpc_server::rpc_start()
         // 通过传入this指针, 让类的成员函数可以创建线程, 线程的工作函数也是类的成员函数
         threads[i] = thread(&Rpc_server::rpc_deal, this);
         threads[i].detach(); // 让线程独立运行
+    }
+    while (true)
+    {
+        string s;
+        cout << "输入 SHUT DOWN 以关闭注册中心\n";
+        getline(cin, s);
+        transform(s.begin(), s.end(), s.begin(), ::toupper);
+        if (s == "SHUT DOWN")
+            is_stop = true;
+        return;
     }
 }
 
