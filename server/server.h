@@ -11,6 +11,10 @@
 #include <map>
 #include <mutex>
 #include <thread>
+#include <regex>
+#include <vector>
+#include <string>
+#include <algorithm>
 #include "../json/json.hpp"
 #include "../json/json.h"
 using namespace std;
@@ -22,16 +26,20 @@ using json = nlohmann::json;
 class Server
 {
 public:
-    void server_init(string, short, int, int[], int = 0, string, short); // 初始化
-    void server_start();                         // 服务器开始运行
+    void server_init(string, short, int, int[], string, short, int = 0); // 初始化
+    void server_start();                                                 // 服务器开始运行
 private:
-    void add_func_map(int); // 向本地服务表中添加
-    void deal_client();
+    void add_func_map(int);     // 向本地服务表中添加
+    void deal_client();         // 处理客户端请求
+    void set_timeout(int, int); // 设置连接超时时间
+    ~Server();
+
 private:
     string server_ip;          // 服务端ip
+    bool is_stop = false;      // 控制服务器关闭
     short server_port;         // 服务端端口号
-    int server_fd;             // 接受客户端连接套接字
-    int sev2rpc_fd;          //连接注册中心套接字
+    int with_clt_fd;           // 接受客户端连接套接字
+    int with_rpc_fd;           // 连接注册中心套接字
     map<string, int> func2idx; // 本地服务表, 服务器端已有服务和对应编号
     int num_func;              // 服务端支持的服务的个数
 private:
