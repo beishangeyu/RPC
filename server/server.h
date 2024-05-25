@@ -28,11 +28,12 @@ class Server
 public:
     void server_init(string, short, int, int[], string, short, int = 0); // 初始化
     void server_start();                                                 // 服务器开始运行
+    ~Server();
+
 private:
     void add_func_map(int);     // 向本地服务表中添加
     void deal_client();         // 处理客户端请求
     void set_timeout(int, int); // 设置连接超时时间
-    ~Server();
 
 private:
     string server_ip;          // 服务端ip
