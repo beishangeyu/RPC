@@ -152,8 +152,10 @@ void Server::server_start()
         getline(cin, s);
         transform(s.begin(), s.end(), s.begin(), ::toupper);
         if (s == "SHUT DOWN")
+        {
             is_stop = true;
-        return;
+            return;
+        }
     }
 }
 
