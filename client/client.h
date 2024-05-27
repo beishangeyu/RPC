@@ -8,24 +8,35 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <fcntl.h>
-#include <cstdlib>
 #include <map>
+#include <mutex>
+#include <thread>
+#include <regex>
+#include <vector>
 #include <string>
+#include <algorithm>
 #include "../json/json.hpp"
+#include "../json/json.h"
 using namespace std;
 using json = nlohmann::json;
 
 // 服务器类
-class CLIENT
+class Client
 {
 public:
-    void client_init(); // 初始化连接
-    void client_pull(); // 从 rpc 获取服务器地址
-    void client_call(); // 向服务端申请调用
+    void client_init(string rpc_ip, short rpc_port); // 初始化连接
+    void client_start();                             // 请求服务
 private:
-    int client_fd; // 客户端套接字
-    json client_msg;
+    void set_timeout(int fd, int sec);
+    int client_pull(string func); // 从 rpc 获取服务器地址
+    int client_call(string func); // 向服务端申请调用
+    int with_rpc;                 // 和 rpc 通信的套接字
+    int with_ser;                 // 和server通信的套接字
+    string rpc_ip;
+    short rpc_port;
+    string server_ip;
+    short server_port;
+    bool is_stop = false;
 };
 
 #endif

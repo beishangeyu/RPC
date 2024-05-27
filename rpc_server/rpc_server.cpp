@@ -97,6 +97,7 @@ void Rpc_server::rpc_deal()
         if (conc == -1)
         {
             cout << "Accept失败" << endl;
+            sleep(3);
             continue;
         }
         set_timeout(conc, 20); // 设置读写超时时间为10秒
@@ -135,7 +136,7 @@ void Rpc_server::rpc_deal()
         // 把 json 转化为字节流, 往连接上写数据
         string msg = resp.dump();
         // 处理写失败
-        if (write(conc, msg.c_str(), msg.length()) == -1)
+        if (send(conc, msg.c_str(), msg.length(), 0) == -1)
         {
             if (errno == EWOULDBLOCK || errno == EAGAIN)
             {

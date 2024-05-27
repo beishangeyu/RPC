@@ -84,7 +84,6 @@ void Server::server_init(string ip, short port, int num, int func[],
             return;
         }
     }
-
     // 向本地服务表注册
     for (int i = 0; i < num; i++)
     {
@@ -100,13 +99,13 @@ void Server::server_init(string ip, short port, int num, int func[],
     for (auto it : func2idx)
     {
         with_rpc_fd = socket(AF_INET, SOCK_STREAM, 0);
+        set_timeout(with_rpc_fd, 10); // 设置读写超时时间为10秒
         // 向注册中心发起连接
         int conc = -1;
         while (conc == -1)
         {
             conc = connect(with_rpc_fd, (struct sockaddr *)&rpc_addr, sizeof(rpc_addr));
         };
-        set_timeout(conc, 500); // 设置读写超时时间为10秒
         // 向注册中心发送信息
         // 标明身份, ip, port, 注册函数名
         json registe_msg;
@@ -115,13 +114,38 @@ void Server::server_init(string ip, short port, int num, int func[],
         registe_msg[PORT] = server_port;
         registe_msg[FUNC] = it.first;
         string send_msg = registe_msg.dump();
-        write(with_rpc_fd, send_msg.c_str(), send_msg.length());
+        // 一直写直到写成功
+        while (send(with_rpc_fd, send_msg.c_str(), send_msg.length(), 0) == -1)
+        {
+            if (errno == EWOULDBLOCK || errno == EAGAIN)
+            {
+                cout << "write超时" << endl;
+            }
+            else
+            {
+                cout << "write失败" << endl;
+            }
+            close(conc);
+            close(with_rpc_fd);
+            sleep(3);
+        }
         // 接收注册中心发来的注册结果
         char buffer[1024];
         int byte = -1;
-        while (byte == -1)
+        // 处理读失败
+        if (byte == -1)
         {
-            byte = recv(with_rpc_fd, buffer, sizeof(buffer) - 1, 0);
+            if (errno == EWOULDBLOCK || errno == EAGAIN)
+            {
+                cout << "recv超时" << endl;
+            }
+            else
+            {
+                cout << "recv失败" << endl;
+            }
+            close(conc);
+            close(with_rpc_fd);
+            continue;
         }
         buffer[byte] = '\0';
         json ret = json::parse(buffer);
@@ -303,7 +327,7 @@ void Server::deal_client()
         // 返回结果
         send_msg[RET] = SUCCESS;
         string msg = send_msg.dump();
-        if (write(conc, msg.c_str(), msg.length()) == -1)
+        if (send(conc, msg.c_str(), msg.length(), 0) == -1)
         {
             if (errno == EWOULDBLOCK || errno == EAGAIN)
             {
