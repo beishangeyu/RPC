@@ -171,7 +171,7 @@ int Client::client_call(string func)
     // 调用成功, 输出运行结果
     if (recv_msg[RET] == SUCCESS)
     {
-        cout << "运行结果: " + recv_msg[RES] << endl;
+        cout << "运行结果: " << string(recv_msg[RES]) << endl;
         return 1;
     }
     // 调用失败
