@@ -7,7 +7,7 @@
 /// @param rpc_ip 注册中心的ip地址
 /// @param rpc_port 注册中心的端口
 /// @param ipv6 是否监听ipv6地址, 默认否
-void Server::server_init(string ip, short port, int num, int func[],
+void Server::server_init(string ip, short port, int num, vector<int> func,
                          string rpc_ip, short rpc_port, int ipv6)
 {
     // 设置服务器基本参数
