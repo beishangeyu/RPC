@@ -3,11 +3,10 @@
 /// @param ip sever端监听的ip地址
 /// @param port sever端的端口
 /// @param num 需要注册的服务个数
-/// @param func 所有需要注册的服务编号
 /// @param rpc_ip 注册中心的ip地址
 /// @param rpc_port 注册中心的端口
 /// @param ipv6 是否监听ipv6地址, 默认否
-void Server::server_init(string ip, short port, int num, vector<int> func,
+void Server::server_init(string ip, short port, int num,
                          string rpc_ip, short rpc_port, int ipv6)
 {
     // 设置服务器基本参数
@@ -87,7 +86,11 @@ void Server::server_init(string ip, short port, int num, vector<int> func,
     // 向本地服务表注册
     for (int i = 0; i < num; i++)
     {
-        add_func_map(func[i]);
+        int idx;
+        cin >> idx;
+        cout << "输入服务编号: ";
+        add_func_map(idx);
+        cout << "注册成功!(本地服务表)\n";
     }
 
     // 创建向rpc注册中心连接的套接字
@@ -150,9 +153,9 @@ void Server::server_init(string ip, short port, int num, vector<int> func,
         buffer[byte] = '\0';
         json ret = json::parse(buffer);
         if (ret[RET] == SUCCESS)
-            cout << it.first + " 注册成功!\n";
+            cout << it.first + " 注册成功!(注册中心)\n";
         else
-            cout << it.first + " 注册失败!\n";
+            cout << it.first + " 注册失败!(注册中心)\n";
         close(conc);
         close(with_rpc_fd);
     }

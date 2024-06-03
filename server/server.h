@@ -26,8 +26,8 @@ using json = nlohmann::json;
 class Server
 {
 public:
-    void server_init(string, short, int, vector<int>, string, short, int = 0); // 初始化
-    void server_start();                                                       // 服务器开始运行
+    void server_init(string, short, int, string, short, int = 0); // 初始化
+    void server_start();                                          // 服务器开始运行
     ~Server();
 
 private:
