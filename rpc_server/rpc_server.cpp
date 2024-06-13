@@ -90,9 +90,10 @@ json Rpc_server::rpc_dealserver(json recv_msg)
 /// @brief 处理 connect 请求, 线程的工作函数
 void Rpc_server::rpc_deal()
 {
+    sleep(2);
     while (!is_stop)
     {
-        int conc = accept(rpc_fd, nullptr, nullptr);
+        int conc = accept(this->rpc_fd, nullptr, nullptr);
         // 处理获取连接失败的情况
         if (conc == -1)
         {
@@ -101,7 +102,6 @@ void Rpc_server::rpc_deal()
             continue;
         }
         set_timeout(conc, 20); // 设置读写超时时间为10秒
-        cout << conc << endl;
         char buffer[1024];
         // 从连接上读取数据
         json recv_msg;
@@ -122,7 +122,7 @@ void Rpc_server::rpc_deal()
         }
         buffer[byte] = '\0';
         recv_msg = recv_msg.parse(buffer);
-        cout << recv_msg;
+        cout << recv_msg << endl;
         // 生成响应报文并写入连接
         json resp;
         if (recv_msg[IDENTITY] == CLIENT)

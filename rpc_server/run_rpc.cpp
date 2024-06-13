@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
         ip = string(argv[2]);
         port = stoi(argv[4]);
     }
-    else if (argc == 3)
+    else if (argc == 1)
         my_rpc.rpc_init(ip, port);
     my_rpc.rpc_start();
 }
