@@ -228,7 +228,7 @@ void Server::add_func_map(int func_idx)
 /// @brief 处理客户端的请求
 void Server::deal_client()
 {
-    while (!is_stop)
+    while (true)
     {
         // 接受客户端发来的json
         int conc = accept(with_clt_fd, nullptr, nullptr);
