@@ -31,8 +31,6 @@ int main(int argc, char *argv[])
             func_num = stoi(argv[4]);
         }
     }
-    // port = 8001;
-    // func_num = 3;
     my_server.server_init(ip, port, func_num, "127.0.0.1", 8000);
     my_server.server_start();
 }

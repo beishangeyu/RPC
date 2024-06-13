@@ -173,9 +173,8 @@ void Server::server_start()
         threads[i] = thread(&Server::deal_client, this);
         threads[i].detach();
     }
-    while (true)
-    {
-    }
+    cin.clear();
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 /// @brief 向本地服务表注册服务
