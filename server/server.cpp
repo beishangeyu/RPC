@@ -175,23 +175,6 @@ void Server::server_start()
     }
     while (true)
     {
-        string s;
-        cin >> s;
-        cout << s << endl;
-    }
-    while (true)
-    {
-        // TODO: 这里不知道为什么一直读入换行符, 考虑直接 ctrl c 结束....
-        cin.clear();
-        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-        string s;
-        cout << "输入 SHUT DOWN 以关闭服务器\n";
-        getline(cin, s);
-        if (s == "SHUT DOWN")
-        {
-            is_stop = true;
-            return;
-        }
     }
 }
 
