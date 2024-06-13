@@ -87,8 +87,9 @@ void Server::server_init(string ip, short port, int num,
     for (int i = 0; i < num; i++)
     {
         int idx;
-        cin >> idx;
         cout << "输入服务编号: ";
+        cin >> idx;
+        getchar();
         add_func_map(idx);
         cout << "注册成功!(本地服务表)\n";
     }
@@ -134,7 +135,7 @@ void Server::server_init(string ip, short port, int num,
         }
         // 接收注册中心发来的注册结果
         char buffer[1024];
-        int byte = -1;
+        int byte = recv(with_rpc_fd, buffer, sizeof(buffer) - 1, 0);
         // 处理读失败
         if (byte == -1)
         {
@@ -175,9 +176,17 @@ void Server::server_start()
     while (true)
     {
         string s;
+        cin >> s;
+        cout << s << endl;
+    }
+    while (true)
+    {
+        // TODO: 这里不知道为什么一直读入换行符, 考虑直接 ctrl c 结束....
+        cin.clear();
+        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        string s;
         cout << "输入 SHUT DOWN 以关闭服务器\n";
         getline(cin, s);
-        transform(s.begin(), s.end(), s.begin(), ::toupper);
         if (s == "SHUT DOWN")
         {
             is_stop = true;
