@@ -49,7 +49,7 @@ json Rpc_server::rpc_dealclient(json recv_msg)
     if (ret)
     {
         resp[IP] = func2ip[func];
-        resp[PORT] = to_string(func2port[func]);
+        resp[PORT] = func2port[func];
     }
     lock.unlock();
     return resp;
@@ -135,6 +135,7 @@ void Rpc_server::rpc_deal()
         }
         // 把 json 转化为字节流, 往连接上写数据
         string msg = resp.dump();
+        // cout << msg << "********\n";
         // 处理写失败
         if (send(conc, msg.c_str(), msg.length(), 0) == -1)
         {

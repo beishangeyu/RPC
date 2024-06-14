@@ -124,8 +124,8 @@ int Client::client_call(string func)
         ;
     // 读入参数
     string args;
-    cout << "输入参数, 参数间以空格分割\n";
-    cin >> args;
+    cout << "输入参数, 参数间以空格分割" << endl;
+    getline(cin, args);
     // 编写向 sever 端发送的信息
     json send2ser;
     send2ser[IDENTITY] = CLIENT;

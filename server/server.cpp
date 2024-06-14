@@ -11,7 +11,7 @@ void Server::server_init(string ip, short port, int num,
 {
     // 设置服务器基本参数
     num_func = num;
-    server_ip = ip;
+    server_ip = ip.length() == 0 ? "0.0.0.0" : ip;
     server_port = port;
     // 创建并绑定ipv6套接字
     if (ipv6)
@@ -173,8 +173,8 @@ void Server::server_start()
         threads[i] = thread(&Server::deal_client, this);
         threads[i].detach();
     }
-    cin.clear();
-    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    while (true)
+        ;
 }
 
 /// @brief 向本地服务表注册服务
