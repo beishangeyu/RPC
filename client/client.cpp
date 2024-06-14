@@ -120,8 +120,9 @@ int Client::client_pull(string func)
 /// @return 调用结果, 0失败, 1成功
 int Client::client_call(string func)
 {
-    while (std::cin.get() != '\n')
-        ;
+    // 清空输入缓冲区
+    cin.clear();
+    cin.ignore();
     // 读入参数
     string args;
     cout << "输入参数, 参数间以空格分割" << endl;
