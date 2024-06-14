@@ -13,9 +13,11 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    string rpc_ip = string(argv[2]);
-    short rpc_port = stoi(argv[4]);
+    // string rpc_ip = string(argv[2]);
+    // short rpc_port = stoi(argv[4]);
     Client my_client;
+    string rpc_ip = "127.0.0.1";
+    short rpc_port = 8000;
     my_client.client_init(rpc_ip, rpc_port);
     my_client.client_start();
 }

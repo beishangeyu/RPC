@@ -24,6 +24,7 @@ void Client::client_start()
         string func;
         cout << "输入想要获取的服务名称, 输入shut down关闭\n";
         cin >> func;
+        getchar();
         if (func == "shut down")
         {
             is_stop = true;
@@ -119,6 +120,8 @@ int Client::client_pull(string func)
 /// @return 调用结果, 0失败, 1成功
 int Client::client_call(string func)
 {
+    while (std::cin.get() != '\n')
+        ;
     // 读入参数
     string args;
     cout << "输入参数, 参数间以空格分割\n";
