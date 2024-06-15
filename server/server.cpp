@@ -129,8 +129,6 @@ void Server::server_init(string ip, short port, int num,
             {
                 cout << "write失败" << endl;
             }
-            close(conc);
-            close(with_rpc_fd);
             sleep(3);
         }
         // 接收注册中心发来的注册结果
@@ -157,8 +155,6 @@ void Server::server_init(string ip, short port, int num,
             cout << it.first + " 注册成功!(注册中心)\n";
         else
             cout << it.first + " 注册失败!(注册中心)\n";
-        close(conc);
-        close(with_rpc_fd);
     }
 }
 
@@ -320,6 +316,8 @@ void Server::deal_client()
         }
         // 返回结果
         send_msg[RET] = SUCCESS;
+        // 输出向client端发送的消息
+        cout << send_msg << endl;
         string msg = send_msg.dump();
         if (send(conc, msg.c_str(), msg.length(), 0) == -1)
         {
@@ -334,7 +332,6 @@ void Server::deal_client()
             close(conc);
             continue;
         }
-        close(conc);
     }
 
     return;

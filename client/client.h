@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <cstdio>
 #include "../json/json.hpp"
 #include "../json/json.h"
 using namespace std;

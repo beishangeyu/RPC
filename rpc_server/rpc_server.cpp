@@ -150,7 +150,6 @@ void Rpc_server::rpc_deal()
             close(conc);
             continue;
         }
-        close(conc);
     }
 
     return;

@@ -23,8 +23,7 @@ void Client::client_start()
     {
         string func;
         cout << "输入想要获取的服务名称, 输入shut down关闭\n";
-        cin >> func;
-        getchar();
+        getline(cin, func);
         if (func == "shut down")
         {
             is_stop = true;
@@ -98,9 +97,9 @@ int Client::client_pull(string func)
         close(conc);
         return 0;
     }
-    close(conc);
     buffer[byte] = '\0';
-    json recv_msg = json::parse(buffer);
+    json recv_msg;
+    recv_msg = recv_msg.parse(buffer);
     // 请求成功
     if (recv_msg[RET] == SUCCESS)
     {
@@ -120,12 +119,8 @@ int Client::client_pull(string func)
 /// @return 调用结果, 0失败, 1成功
 int Client::client_call(string func)
 {
-    // 清空输入缓冲区
-    cin.clear();
-    cin.ignore();
-    // 读入参数
+    cout << "输入参数, 参数间以空格分隔:\n";
     string args;
-    cout << "输入参数, 参数间以空格分割" << endl;
     getline(cin, args);
     // 编写向 sever 端发送的信息
     json send2ser;
@@ -136,8 +131,8 @@ int Client::client_call(string func)
     with_ser = socket(AF_INET, SOCK_STREAM, 0);
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(rpc_port);
-    inet_pton(AF_INET, rpc_ip.c_str(), &server_addr.sin_addr);
+    server_addr.sin_port = htons(server_port);
+    inet_pton(AF_INET, server_ip.c_str(), &server_addr.sin_addr);
     int conc = -1;
     // 尝试10次, 还不行就报错
     for (int i = 0; i < 10 && conc == -1; i++)
@@ -169,13 +164,13 @@ int Client::client_call(string func)
         close(conc);
         return 0;
     }
-    close(conc);
     buffer[byte] = '\0';
-    json recv_msg = json::parse(buffer);
+    json recv_msg;
+    recv_msg = recv_msg.parse(buffer);
     // 调用成功, 输出运行结果
     if (recv_msg[RET] == SUCCESS)
     {
-        cout << "运行结果: " << string(recv_msg[RES]) << endl;
+        cout << "运行结果: " << recv_msg[RES] << endl;
         return 1;
     }
     // 调用失败
